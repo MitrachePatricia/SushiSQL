@@ -1,2 +1,3 @@
-# SushiSQL
-Managing a sushi restaurant Database
+# Managing a sushi restaurant Database
+
+Final project for my Databases seminar.

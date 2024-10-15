@@ -308,6 +308,193 @@ DELETE FROM PROJECT_EMPLOYEES
 WHERE last_name='Emily';
 SELECT* FROM PROJECT_EMPLOYEES;
 
+-- Display all the employees that have worked in the restaurant for less or equal to 4 years
+
+SELECT EMPLOYEE_ID, LAST_NAME, FIRST_NAME, HIRE_DATE
+FROM PROJECT_EMPLOYEES
+WHERE EXTRACT(YEAR FROM SYSDATE) - EXTRACT(YEAR FROM HIRE_DATE) <= 4
+ORDER BY HIRE_DATE;
+
+-- Create a column in the table ORDERS for the price for the item
+
+ALTER TABLE PROJECT_ORDERS ADD(TOTAL_PRICE_ITEM NUMBER(7,2)) 
+GENERATED ALWAYS AS (item_quantity * (SELECT item_price
+                                      FROM PROJECT_MENU_ITEMS));
+-- Create a table named BILLS where we have the total price of the ordered items of each customer 
+
+CREATE TABLE PROJECT_BILLS AS SELECT CUSTOMER_ID FROM PROJECT_CUSTOMERS;
+ALTER TABLE PROJECT_BILLS ADD (TOTAL NUMBER(6,2));
+UPDATE PROJECT_BILLS 
+SET TOTAL = (SELECT SUM(mi.ITEM_PRICE*o.item_quantity)
+            FROM PROJECT_MENU_ITEMS mi, PROJECT_ORDERS o
+            WHERE mi.item_id = o.item_id
+            AND o.CUSTOMER_ID = 70009)
+WHERE CUSTOMER_ID = 70009;
+
+UPDATE PROJECT_BILLS 
+SET TOTAL = (SELECT SUM(mi.ITEM_PRICE*o.item_quantity)
+            FROM PROJECT_MENU_ITEMS mi, PROJECT_ORDERS o
+            WHERE mi.item_id = o.item_id
+            AND o.CUSTOMER_ID = 70999)
+WHERE CUSTOMER_ID = 70999;
+
+UPDATE PROJECT_BILLS 
+SET TOTAL = (SELECT SUM(mi.ITEM_PRICE*o.item_quantity)
+            FROM PROJECT_MENU_ITEMS mi, PROJECT_ORDERS o
+            WHERE mi.item_id = o.item_id
+            AND o.CUSTOMER_ID = 71346)
+WHERE CUSTOMER_ID = 71346;
+
+UPDATE PROJECT_BILLS 
+SET TOTAL = (SELECT SUM(mi.ITEM_PRICE*o.item_quantity)
+            FROM PROJECT_MENU_ITEMS mi, PROJECT_ORDERS o
+            WHERE mi.item_id = o.item_id
+            AND o.CUSTOMER_ID = 73214)
+WHERE CUSTOMER_ID = 73214;
+
+UPDATE PROJECT_BILLS 
+SET TOTAL = (SELECT SUM(mi.ITEM_PRICE*o.item_quantity)
+            FROM PROJECT_MENU_ITEMS mi, PROJECT_ORDERS o
+            WHERE mi.item_id = o.item_id
+            AND o.CUSTOMER_ID = 75671)
+WHERE CUSTOMER_ID = 75671;
+
+UPDATE PROJECT_BILLS 
+SET TOTAL = (SELECT SUM(mi.ITEM_PRICE*o.item_quantity)
+            FROM PROJECT_MENU_ITEMS mi, PROJECT_ORDERS o
+            WHERE mi.item_id = o.item_id
+            AND o.CUSTOMER_ID = 77623)
+WHERE CUSTOMER_ID = 77623;
+
+UPDATE PROJECT_BILLS 
+SET TOTAL = (SELECT SUM(mi.ITEM_PRICE*o.item_quantity)
+            FROM PROJECT_MENU_ITEMS mi, PROJECT_ORDERS o
+            WHERE mi.item_id = o.item_id
+            AND o.CUSTOMER_ID = 79814)
+WHERE CUSTOMER_ID = 79814;
+
+-- Display the name of the employees that work as a chef that have a smaller salary than ALL Hosts
+
+SELECT LAST_NAME, FIRST_NAME, JOB_NAME, SALARY
+FROM PROJECT_EMPLOYEES 
+WHERE SALARY < ALL(SELECT SALARY FROM PROJECT_EMPLOYEES WHERE JOB_NAME = 'Host')
+AND JOB_NAME = 'Chef';
+
+-- Display the name and the salary of the employees who's name start with J
+
+SELECT FIRST_NAME, SALARY
+FROM PROJECT_EMPLOYEES
+WHERE SUBSTR(FIRST_NAME, 1, 1) = 'J';
+
+-- Display the total amount of tips recieved by the waiter with the id = 54651
+
+SELECT sum(o.TIPS/100*b.TOTAL) AS TOTAL_TIPS
+FROM PROJECT_ORDERS o, PROJECT_BILLS b
+WHERE o.waiter_id=54651 
+AND o.customer_id=b.customer_id;
+
+-- Display the customers that dined between 1st of January 2024 and 1st of March 2024
+
+SELECT customer_name, reservation_date
+FROM project_customers
+WHERE reservation_date BETWEEN TO_DATE('01-01-2024','DD-MM-RRRR') AND TO_DATE('01-03-2024','DD-MM-RRRR');
+
+-- Display the customer id and the total price of their bill. If they don't have a total yet, return the message "No order placed yet"
+
+SELECT Customer_id, NVL(TO_CHAR(TOTAL), 'No order placed yet') AS TOTAL
+FROM PROJECT_BILLS;
+
+-- The restaurant reached its peak popularity, as a prize, the salaries will rise as following:
+-- Chef's will have their salary increased by 10%, the hosts as 7%, the waiters as 5% and the rest by 3%.
+
+SELECT first_name, last_name, job_name, 
+(CASE UPPER(job_name)
+when 'CHEF' then 0.1
+when 'HOST' then 0.07
+when 'WAITER' then 0.05
+else 0.03
+END) * SALARY + SALARY
+FROM PROJECT_EMPLOYEES;
+
+-- Display all the free tables
+
+SELECT ta.TABLE_NO, ta.capacity
+FROM PROJECT_ORDERS ord, PROJECT_TABLES ta
+WHERE ta.table_no = ord.table_no(+)
+MINUS
+SELECT ta.TABLE_NO, ta.capacity
+FROM  PROJECT_ORDERS ord, PROJECT_TABLES ta
+WHERE ta.table_no = ord.table_no;
+
+-- Display the items that have dairy as an allergen and are cheaper than 100 lei
+
+SELECT mi.chef_id, item_name, item_allergens, item_price
+FROM PROJECT_MENU_ITEMS mi, PROJECT_CHEFS ch 
+WHERE mi.chef_id=ch.chef_id AND item_allergens = 'Dairy'
+INTERSECT
+SELECT mi.chef_id, item_name, item_allergens, item_price
+FROM  PROJECT_MENU_ITEMS mi, PROJECT_CHEFS ch
+WHERE mi.chef_id=ch.chef_id AND item_price < 100;
+
+-- Display the categorization of every table
+
+SELECT table_no,location,
+DECODE(CAPACITY,
+    2, 'Small party',
+    4, 'Medium party',
+    6, 'Big party',
+    'Uncategorized') AS party_size
+FROM project_tables;
+
+-- Create a view for the ingredients that will expire by 1st of February 2024.
+
+CREATE VIEW Expired_Prod_Feb
+AS
+SELECT ingredient_name, expiration_date
+FROM project_ingredients
+WHERE expiration_date <= TO_DATE('01-02-2024', 'DD-MM-RRRR');
+
+DROP VIEW Expired_Prod_Feb;
+
+-- Display the number of menu items from each category
+
+SELECT ITEM_TYPE, count(item_type) AS NO_ITEMS
+FROM PROJECT_MENU_ITEMS
+group by ITEM_TYPE;
+
+-- Create a synonym for the table PROJECT_CUSTOMERS
+
+CREATE SYNONYM Reservations for project_customers;
+select* from reservations;
+drop synonym reservations;
+
+--Display the name of the employees that have an @yahoo mail.
+
+SELECT last_name, first_name, email
+FROM PROJECT_EMPLOYEES
+WHERE email LIKE('%@yahoo.com');
+
+--Displaying the hierarchical structure of the table
+
+Update PROJECT_EMPLOYEES
+SET JOB_NAME = 'Manager'
+WHERE EMPLOYEE_ID = 3212;
+
+ALTER TABLE PROJECT_EMPLOYEES MODIFY (MANAGER_ID NUMBER(6));
+UPDATE PROJECT_EMPLOYEES 
+SET MANAGER_ID = EMPLOYEE_ID
+WHERE JOB_NAME = 'Manager';
+
+ALTER TABLE PROJECT_EMPLOYEES
+ADD CONSTRAINT fk_manager foreign key (manager_id) 
+references PROJECT_EMPLOYEES(employee_id);
+
+select employee_id, first_name, last_name, salary,
+level from PROJECT_employees
+WHERE manager_id = 3212
+connect by prior employee_id=manager_id
+start with manager_id=3212;
+
 
 
 

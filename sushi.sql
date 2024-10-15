@@ -299,7 +299,14 @@ INSERT INTO PROJECT_ORDERS (order_id, tips, waiter_id, customer_id, table_no, it
 INSERT INTO PROJECT_ORDERS (order_id, tips, waiter_id, customer_id, table_no, item_id, item_quantity) VALUES (206, 10, 86347, 70009, 7, 19, 8); 
 INSERT INTO PROJECT_ORDERS (order_id, tips, waiter_id, customer_id, table_no, item_id, item_quantity) VALUES (207, 15, 13461, 70009, 5, 28, 2); 
 
+UPDATE PROJECT_INGREDIENTS
+SET ingredient_price_per_measurment=ingredient_price_per_measurment-ingredient_price_per_measurment*10/100
+WHERE ingredient_name = 'Mango';
+SELECT* FROM PROJECT_INGREDIENTS;
 
+DELETE FROM PROJECT_EMPLOYEES
+WHERE last_name='Emily';
+SELECT* FROM PROJECT_EMPLOYEES;
 
 
 
